@@ -1,9 +1,10 @@
 import os
+import time
 import logging
 import requests
 import pandas as pd
 
-from schedule import every
+from schedule import every, run_pending, idle_seconds
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
@@ -143,3 +144,12 @@ def main():
 if __name__ == '__main__': 
     # запускается ежедневно в 19:00  
     every().day.at('19:00').do(main)
+    while True:
+        n = idle_seconds()
+        if n is None:
+            break
+        elif n > 0:
+            # Засыпаем на время ожидание
+            log.info('Засыпаю до времени выполенния')
+            time.sleep(n)
+        run_pending()

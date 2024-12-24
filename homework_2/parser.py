@@ -4,9 +4,10 @@ import logging
 import requests
 import pandas as pd
 
-from schedule import every, run_pending, idle_seconds
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from schedule import every, run_pending, idle_seconds
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
 load_dotenv()
 
@@ -72,6 +73,14 @@ def books_to_csv(base_url: str, output_file: str) -> None:
     # записываем в csv файл без индексации
     df.to_csv(output_file, index=False, encoding='utf-8')
 
+@retry(
+    # количество попыток
+    stop=stop_after_attempt(3),
+    # интервал между попытками
+    wait=wait_fixed(2),
+    # повторять только при таймауте
+    retry=retry_if_exception_type(requests.exceptions.Timeout)
+)
 def scrape_book_data(book_url: str) -> list:
     '''
     Парсит данные указанной книги и отдаёт её характеристики

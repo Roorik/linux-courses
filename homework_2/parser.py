@@ -34,7 +34,7 @@ def books_to_csv(base_url: str, output_file: str) -> None:
         # адрес по которому будем парсить
         url = f'{base_url}/catalogue/page-{page}.html'
         # получаем ответ от страницы
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         
         # если не 200й статус (т.е. любая ошибка) то выходим из цикла
         status = response.status_code
@@ -59,7 +59,10 @@ def books_to_csv(base_url: str, output_file: str) -> None:
             # парсим книгу
             book_data = scrape_book_data(book_link)
             # добавляем полученные значения в лист с данными
-            data.append(book_data)          
+            data.append(book_data)      
+            # немного стопорим код для снижения нагрузки 
+            time.sleep(1)    
+
     
     log.info(f'Распаршено {page-1} страниц')
     # составляем датафрейм из полученных данных
@@ -67,7 +70,7 @@ def books_to_csv(base_url: str, output_file: str) -> None:
     # чистим данные
     clean_dataframe(df=df)
     # записываем в csv файл без индексации
-    df.to_csv(output_file, index=False)
+    df.to_csv(output_file, index=False, encoding='utf-8')
 
 def scrape_book_data(book_url: str) -> list:
     '''
@@ -77,7 +80,7 @@ def scrape_book_data(book_url: str) -> list:
     :return: list - полученные характеристики книги
     '''
     # получаем ответ от страницы с книгой
-    response = requests.get(book_url)
+    response = requests.get(book_url, timeout=10)
     # передаём html парсеру контент со страницы
     soup = BeautifulSoup(response.content, 'html.parser')
     
